@@ -1,0 +1,19 @@
+services:
+  nova-image-studio:
+    build: .
+    image: nova-image-studio:local
+    ports:
+      - "${HOST_PORT:-5283}:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+      NOVA_TASK_DB: /data/nova-tasks.sqlite
+      NOVA_IMAGE_DIR: /data/nova-images
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 60s
