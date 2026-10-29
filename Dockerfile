@@ -4,7 +4,9 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 COPY frontend/package.json frontend/package-lock.json ./frontend/
-RUN cd frontend && npm ci --no-audit --no-fund
+# Zeabur injects NODE_ENV=production into build steps. Keep TypeScript,
+# Tailwind and other devDependencies available to the frontend compiler.
+RUN cd frontend && npm ci --include=dev --no-audit --no-fund
 COPY frontend/ ./frontend/
 RUN cd frontend && npm run build
 
