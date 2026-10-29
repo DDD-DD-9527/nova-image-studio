@@ -2,6 +2,21 @@
 
 本副本部署到个人仓库 `DDD-DD-9527/nova-image-studio`，分支 `main`，保留原项目 AGPL-3.0 许可证及原有说明。
 
+## 3.4.0 升级（2026-10-30）
+
+- 原源码为 3.1.3；本地运行的 `tianjiangqiji/nova-image-studio:latest` 镜像为 3.4.0，两者来源不同。
+- 本仓库现采用上游 `tianjiangqiji/nova-image-studio` 的固定提交 `b8cd44cc083a0429f8df6a7c9fc5b935b7ae0731`（3.4.0），包括视频/插件、Agent、浏览器工具和桌面端源码。该提交与本地镜像后端文件校验和不同，不声称是该镜像的逐字节源码。
+- 保留个人 Dockerfile、Compose、`/data` 持久化及 `npm ci --include=dev` 构建修复。未导入上游桌面发布 workflow；不会替个人仓库创建桌面安装包发布。
+- 已有 Zeabur 环境变量继续适用，持久化存储继续挂载 `/data`。Dockerfile 新增默认 `NOVA_PLUGIN_MEDIA_DIR=/data/plugin-media`，防止视频插件的参考素材落到临时容器文件系统；也可在 Zeabur 显式设置此变量。
+- 使用包含参考素材的视频插件时，建议另设 `NOVA_PUBLIC_BASE_URL=https://你的Zeabur域名`，供上游服务访问素材。模型和 API Key 仍在网页设置中配置。
+- CDP 浏览器自动化是本地/桌面能力，云容器默认不安装 Chrome，保持 `NOVA_CDP_ENABLED=false`。云端支持通用网页及模型功能，不承诺连接到用户电脑上的浏览器。
+- 插件素材、任务和图片都有上游应用定义的清理期限，持久化挂载不代表永久归档。升级前建议在 Zeabur 对 `/data` 做快照；本轮未操作云端存储或本地运行容器。
+- 版本标识来自根目录 `package.json`，前后端 package 均为 3.4.0。部署完成后如仍显示旧界面，关闭旧标签页重新打开；必要时清理该站点缓存（清理前先备份浏览器内保存的模型配置和素材）。
+
+本轮验证：生产构建通过，前端 68 个文件共 672 项测试通过；Linux 隔离容器中的后端 115 项测试通过，三项生产依赖版本与锁文件一致；视频插件 7 组 fixtures 通过。临时容器 `http://127.0.0.1:5283` 首页、队列、插件、提示词、黑名单及 WebSocket 验证通过，未调用付费模型，也未使用现有数据库。
+
+Windows 本机安装 `better-sqlite3@13.0.3` 需要 Visual Studio C++ 工具链，本机缺失，故后端原生模块验证在 Linux 隔离容器执行。Dockerfile 已包含 Linux 编译工具链。Docker 从零构建仍受本机失效 Docker 代理影响；Zeabur 本次升级的实际构建和在线验收尚待部署确认。
+
 ## Zeabur 配置
 
 1. 新建项目，从 GitHub 导入上述个人仓库，选择 `main` 分支，构建根目录 `/`。

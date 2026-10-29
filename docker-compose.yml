@@ -12,6 +12,7 @@ services:
       PORT: "3000"
       NOVA_TASK_DB: /data/nova-tasks.sqlite
       NOVA_IMAGE_DIR: /data/nova-images
+      NOVA_PLUGIN_MEDIA_DIR: /data/plugin-media
     volumes:
       - ./data:/data
     restart: unless-stopped

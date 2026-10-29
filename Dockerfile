@@ -33,6 +33,8 @@ ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0 PORT=3000 \
     NOVA_TASK_DB=/data/nova-tasks.sqlite \
     NOVA_IMAGE_DIR=/data/nova-images \
+    NOVA_PLUGIN_MEDIA_DIR=/data/plugin-media \
+    NOVA_CDP_ENABLED=false \
     TZ=Asia/Shanghai
 
 COPY backend/ ./backend/

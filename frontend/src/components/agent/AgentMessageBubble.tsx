@@ -30,11 +30,17 @@ import type { ImageActionPayload } from '@/lib/image-actions';
 export interface AgentMessageBubbleProps {
   message: AgentMessage;
   imageMap: Map<string, AgentImageRecord>;
+  sessionId: string;
   onWithdraw: (noteId: string) => void;
+  messageActionsDisabled?: boolean;
   onReedit?: (messageId: string) => void;
+  /** 非空闲阶段（生成中/提案确认中）禁止重新编辑，与 useAgentChat 的 phase 守卫一致 */
+  reeditDisabled?: boolean;
   onCopy?: () => void;
   onDelete?: () => void;
   onRollback?: () => void;
+  /** 仅最后一条用户消息会拿到该回调；见 useAgentChat 的 retryableMessageId */
+  onRetry?: () => void;
   onRedescribe?: (imgId: string) => Promise<string>;
 }
 
@@ -61,11 +67,15 @@ export function AgentMessageBubble({
   message,
   imageMap,
   onWithdraw,
+  messageActionsDisabled,
   onReedit,
+  reeditDisabled,
   onCopy,
   onDelete,
   onRollback,
+  onRetry,
   onRedescribe,
+  sessionId,
 }: AgentMessageBubbleProps) {
   const [previewImages, setPreviewImages] = useState<string[] | null>(null);
   const [previewSourceImages, setPreviewSourceImages] = useState<AgentImageRecord[]>([]);
@@ -117,7 +127,7 @@ export function AgentMessageBubble({
     setPreviewImages(thumbs);
     setPreviewSourceImages(imgs);
 
-    const blobs = await Promise.all(imgs.map(i => getAgentImageBytes(i.imgId)));
+    const blobs = await Promise.all(imgs.map(i => getAgentImageBytes(i.imgId, sessionId)));
     if (token !== previewTokenRef.current) return;
 
     const objectUrls: string[] = [];
@@ -130,7 +140,7 @@ export function AgentMessageBubble({
     });
     previewObjectUrlsRef.current = objectUrls;
     setPreviewImages(fullSrcs);
-  }, [revokePreviewUrls]);
+  }, [revokePreviewUrls, sessionId]);
 
   const closePreview = useCallback(() => {
     previewTokenRef.current++;
@@ -150,7 +160,8 @@ export function AgentMessageBubble({
     sourceRef: img.imgId,
     prompt: getUsableDescription(img.description) || img.description,
     note: getUsableDescription(img.description),
-  }), []);
+    sessionId,
+  }), [sessionId]);
 
   if (message.role === 'context-divider') {
     return (
@@ -167,7 +178,7 @@ export function AgentMessageBubble({
       <div className="flex justify-center">
         <span className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
           {message.text}
-          {message.withdrawable && (
+          {message.withdrawable && !messageActionsDisabled && (
             <button
               type="button"
               onClick={() => onWithdraw(message.id)}
@@ -196,7 +207,7 @@ export function AgentMessageBubble({
       )}>
         {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
       </div>
-      <div className={cn('flex max-w-[80%] flex-col gap-2', isUser && 'items-end')}>
+      <div className={cn('flex min-w-0 max-w-[80%] flex-col gap-2', isUser && 'items-end')}>
         {!isUser && message.reasoning && !isGenerationResult && (
           <div className="rounded-xl border border-border/60 bg-muted/30">
             <button
@@ -220,7 +231,7 @@ export function AgentMessageBubble({
         ) : message.text ? (
           <div className={cn(
             'rounded-2xl px-3.5 py-2.5 text-sm',
-            isUser ? 'rounded-tr-sm bg-primary text-primary-foreground whitespace-pre-wrap' : 'rounded-tl-sm bg-muted md-message'
+            isUser ? 'min-w-0 max-w-full break-all rounded-tr-sm bg-primary text-primary-foreground whitespace-pre-wrap' : 'min-w-0 max-w-full break-words rounded-tl-sm bg-muted md-message'
           )}>
             {isUser ? message.text : <div ref={mdContentRef} dangerouslySetInnerHTML={{ __html: renderedMarkdown }} />}
           </div>
@@ -270,12 +281,13 @@ export function AgentMessageBubble({
             ))}
           </div>
         )}
-        {!isUser && message.proposalData && linkedImages.length > 0 && (
+        {!isUser && message.proposalData && (
           <button
             type="button"
             onClick={() => onReedit?.(message.id)}
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors self-start"
-            title="重新编辑此轮生图请求"
+            disabled={reeditDisabled}
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors self-start disabled:pointer-events-none disabled:opacity-40"
+            title={reeditDisabled ? '生成或提案确认进行中，结束后再重新编辑' : '重新编辑此轮生图请求'}
           >
             <Pencil className="h-3 w-3" />
             重新编辑
@@ -300,6 +312,17 @@ export function AgentMessageBubble({
             {copiedText ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
             {copiedText ? '已复制' : '复制'}
           </button>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+              title="用这条消息重新提问，丢弃它之后的回复"
+            >
+              <RefreshCw className="h-3 w-3" />
+              重试
+            </button>
+          )}
           {onRollback && (
             <button
               type="button"

@@ -16,27 +16,10 @@ import {
 import { runImageAction, type ImageActionPayload } from '@/lib/image-actions';
 
 import { BA_RANDOM_URL, BING_WALLPAPER_URL } from '@/lib/constants';
+import { useBodyScrollLock } from '@/lib/scroll-lock';
 
 function getDistance(t1: { clientX: number; clientY: number }, t2: { clientX: number; clientY: number }) {
   return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-}
-
-/** Lock body scroll while mounted, preserving scroll position. */
-function useBodyScrollLock(active: boolean) {
-  useEffect(() => {
-    if (!active) return;
-    const scrollY = window.scrollY;
-    Object.assign(document.body.style, { overflow: 'hidden', position: 'fixed', top: `-${scrollY}px`, width: '100%' });
-    document.documentElement.style.overflow = 'hidden';
-    return () => {
-      document.body.style.removeProperty('overflow');
-      document.body.style.removeProperty('position');
-      document.body.style.removeProperty('top');
-      document.body.style.removeProperty('width');
-      document.documentElement.style.removeProperty('overflow');
-      window.scrollTo(0, scrollY);
-    };
-  }, [active]);
 }
 
 export interface WorkspaceHeaderRef {
@@ -133,16 +116,16 @@ export const WorkspaceHeader = forwardRef<WorkspaceHeaderRef, WorkspaceHeaderPro
             type="button"
             onClick={onLogoClick}
             className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:rounded-xl"
-            aria-label="Nova Image logo"
+            aria-label="Nova Studio logo"
           >
             <img
               src="/favicon.png"
-              alt="Nova Image logo"
+              alt="Nova Studio logo"
               className="h-8 w-8 flex-shrink-0 rounded-lg object-cover ring-1 ring-border/60 sm:h-11 sm:w-11 sm:rounded-xl"
             />
           </button>
           <div className="hidden min-w-0 space-y-1 sm:block">
-            <h1 className="truncate text-2xl font-semibold tracking-tight">Nova Image</h1>
+            <h1 className="truncate text-2xl font-semibold tracking-tight">Nova Studio</h1>
             <p className="text-sm text-muted-foreground">批量 API 图像生成器</p>
           </div>
         </div>

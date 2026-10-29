@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/tianjiangqiji/nova-image-studio",
+  "commit": "b8cd44cc083a0429f8df6a7c9fc5b935b7ae0731",
+  "version": "3.4.0",
+  "importedAt": "2026-10-30",
+  "deployment": "Personal GitHub main branch, Dockerfile on Zeabur",
+  "note": "Deployment configuration is customized. The locally running 3.4.0 Docker image has different backend source bytes."
+}
