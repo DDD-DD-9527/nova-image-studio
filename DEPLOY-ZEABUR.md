@@ -65,6 +65,8 @@ GitHub 仅提交源码、原许可证、文档和部署配置。本机 `.env`、
 
 ## 本次验证（2026-10-29）
 
+Zeabur 会把服务环境变量注入 Docker 构建步骤，因此前端安装命令必须显式带 `--include=dev`。否则 `NODE_ENV=production` 会跳过 TypeScript 等构建依赖，Next.js 无法读取 `tsconfig.json` 的 `@/*` 路径别名，出现 `Can't resolve '@/components/…'`。运行阶段仍使用生产模式，后端依赖仍仅安装生产依赖。
+
 - `npm run build` 通过，Next.js 静态导出成功。
 - 前端现有测试 13 个文件、80 项全部通过；后端图片流式回退集成测试 1 项通过，使用本地模拟上游，未调用付费 API。
 - `docker compose config --quiet`、后端 JavaScript 语法检查通过。
